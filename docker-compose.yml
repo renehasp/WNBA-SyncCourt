@@ -1,16 +1,6 @@
-# WNBA SyncCourt v1.2.0 - Production Ready
-# Live WNBA game tracker with team detail pages, player rosters, box scores, shot charts, and leaderboards
-#
-# Features:
-# - Team detail popup menus with WNBA/ESPN/Wikipedia links
-# - Fixed WNBA team page URLs with correct team IDs
-# - SyncCourt logo and branding
-# - Play-by-play filters by player and play type
-# - Sticky mini scoreboard with dismiss option
-# - Full team names and richer player cards
-# - Box score totals, shot chart with scrubber, league leaderboards
-# - Settings: font size scaling, time zone, favorite team personalization
-# - Spoiler veil for broadcast delay management
+# WNBA SyncCourt v4.0.0
+# Live WNBA game tracker and roster browser with 2D/3D shot charts, spoiler veil, box scores, and more.
+# Pulls data from ESPN public APIs. See README.md for full feature list.
 
 services:
   # Development server with hot reload

@@ -1,4 +1,4 @@
-# WNBA SyncCourt v1.2 Docker Build
+# WNBA SyncCourt v4.0.0
 # Multi-stage build: builder stage (compile) + production stage (runtime)
 
 # Build stage
@@ -27,7 +27,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy built app from builder
 COPY --from=builder /app/.next ./.next
