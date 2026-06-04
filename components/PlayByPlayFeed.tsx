@@ -184,8 +184,6 @@ function PlayCard({
   play,
   home,
   away,
-  homeColor,
-  awayColor,
   isNewest,
   headshotSrc,
   onAvatarClick,
@@ -197,8 +195,6 @@ function PlayCard({
   play: ProcessedPlay;
   home: ESPNCompetitor;
   away: ESPNCompetitor;
-  homeColor: string;
-  awayColor: string;
   isNewest: boolean;
   headshotSrc: string | null;
   onAvatarClick?: () => void;
@@ -573,7 +569,7 @@ export default function PlayByPlayFeed({
   const [selectedPlayType, setSelectedPlayType] = useState<PlayType | null>(null);
 
   // Extract unique players and play types from visiblePlays
-  const { uniquePlayers, uniquePlayTypes, playersByTeam } = useMemo(() => {
+  const { uniquePlayTypes, playersByTeam } = useMemo(() => {
     const players = new Map<string, { name: string; team: string; teamId: string }>();
     const playTypes = new Set<PlayType>();
 
@@ -628,7 +624,6 @@ export default function PlayByPlayFeed({
     });
 
     return {
-      uniquePlayers: Array.from(players.values()),
       uniquePlayTypes: Array.from(playTypes).sort(),
       playersByTeam: grouped,
     };
@@ -795,8 +790,7 @@ export default function PlayByPlayFeed({
                 play={play}
                 home={home}
                 away={away}
-                homeColor={homeColor}
-                awayColor={awayColor}
+
                 isNewest={i === 0}
                 headshotSrc={resolved?.headshot ?? null}
                 onAvatarClick={

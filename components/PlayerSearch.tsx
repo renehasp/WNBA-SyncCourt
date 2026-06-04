@@ -31,9 +31,8 @@ export default function PlayerSearch() {
     staleTime: 30 * 60 * 1000,
   });
 
-  const players = data?.players ?? [];
-
   const matches = useMemo(() => {
+    const players = data?.players ?? [];
     const tokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
     if (!tokens.length) return [];
     return players
@@ -42,10 +41,10 @@ export default function PlayerSearch() {
         return tokens.every((t) => hay.includes(t));
       })
       .slice(0, MAX_RESULTS);
-  }, [q, players]);
+  }, [q, data?.players]);
 
   useEffect(() => {
-    setHighlightIdx(0);
+    queueMicrotask(() => setHighlightIdx(0));
   }, [q]);
 
   // Close dropdown on outside click

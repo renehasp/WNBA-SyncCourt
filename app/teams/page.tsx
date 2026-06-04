@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Loader2, Users } from "lucide-react";
@@ -8,8 +7,6 @@ import PlayerSearch from "@/components/PlayerSearch";
 import TeamCard from "@/components/TeamCard";
 import { fetchTeams, getTeamLogoUrl } from "@/lib/espn";
 import { useAppStore } from "@/store/useAppStore";
-
-const FAV_YELLOW = "#fde68a";
 
 export default function TeamsPage() {
   const favoriteTeamId = useAppStore((s) => s.favoriteTeamId);

@@ -42,6 +42,9 @@ yarn-error.log*
 # Claude Code local workspace state (worktrees, settings)
 /.claude/
 
+# Understand Anything local analysis artifacts (knowledge graphs, etc.)
+/.understand-anything/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

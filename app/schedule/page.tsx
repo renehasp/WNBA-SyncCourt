@@ -9,7 +9,7 @@ import Navbar from "@/components/Navbar";
 import { fetchSeasonSchedule, getTeamLogoUrl, type ESPNEvent } from "@/lib/espn";
 import { useAppStore } from "@/store/useAppStore";
 import { getTeamColor } from "@/lib/teams";
-import { hexWithOpacity } from "@/lib/utils";
+import { hexWithOpacity, groupEventsByLocalDate, type DateGroup } from "@/lib/utils";
 
 const FAV_YELLOW = "#fde68a";
 
@@ -30,12 +30,6 @@ function shortTzLabel(zone: string): string {
   }
 }
 
-interface DayGroup {
-  iso: string; // YYYY-MM-DD in selected zone
-  display: string; // e.g. "Saturday, April 26"
-  events: ESPNEvent[];
-}
-
 export default function SchedulePage() {
   const tzPref = useAppStore((s) => s.timeZone);
   const tz = tzPref ?? DEVICE_TZ;
@@ -49,44 +43,14 @@ export default function SchedulePage() {
   });
 
   // Filter to upcoming + group by date in the selected time zone.
-  const days: DayGroup[] = useMemo(() => {
+  const days: DateGroup<ESPNEvent>[] = useMemo(() => {
     const events = (data?.events ?? []).filter(
       (e) => e.status?.type?.state === "pre",
     );
-
-    const groups = new Map<string, ESPNEvent[]>();
-    for (const ev of events) {
-      const date = new Date(ev.date);
-      // Build YYYY-MM-DD in the user's selected zone
-      const isoParts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: tz,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).formatToParts(date);
-      const y = isoParts.find((p) => p.type === "year")?.value ?? "";
-      const m = isoParts.find((p) => p.type === "month")?.value ?? "";
-      const d = isoParts.find((p) => p.type === "day")?.value ?? "";
-      const iso = `${y}-${m}-${d}`;
-      if (!groups.has(iso)) groups.set(iso, []);
-      groups.get(iso)!.push(ev);
-    }
-
-    const sortedDays = Array.from(groups.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([iso, evs]) => {
-        const sample = new Date(evs[0].date);
-        const display = new Intl.DateTimeFormat("en-US", {
-          timeZone: tz,
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        }).format(sample);
-        evs.sort((a, b) => +new Date(a.date) - +new Date(b.date));
-        return { iso, display, events: evs };
-      });
-
-    return sortedDays;
+    const groups = groupEventsByLocalDate(events, tz);
+    // Preserve the intra-day time sort that schedule page had.
+    groups.forEach((g) => g.events.sort((a, b) => +new Date(a.date) - +new Date(b.date)));
+    return groups;
   }, [data, tz]);
 
   return (

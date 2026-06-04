@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Clock, Radio, X, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Shield, Radio, X, ChevronDown, ChevronUp, Info } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
 import { useSpoilerDelay } from "@/hooks/useSpoilerDelay";
 import { ordinalPeriod } from "@/lib/utils";

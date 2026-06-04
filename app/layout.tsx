@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   description:
     "Real-time WNBA scores, play-by-play, and shot charts with a customizable spoiler delay and TV clock sync.",
   manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({

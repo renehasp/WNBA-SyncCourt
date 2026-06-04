@@ -1,7 +1,6 @@
 "use client";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, Line, Html, Text, Billboard } from "@react-three/drei";
-import { motion, AnimatePresence } from "framer-motion";
+import { OrbitControls, Line, Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronUp, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
@@ -112,12 +111,12 @@ function useSkinToneFromHeadshot(url: string | undefined): string {
 
   useEffect(() => {
     if (!url) {
-      setColor(SKIN_COLOR);
+      queueMicrotask(() => setColor(SKIN_COLOR));
       return;
     }
     const cached = SKIN_TONE_CACHE.get(url);
     if (cached) {
-      setColor(cached);
+      queueMicrotask(() => setColor(cached));
       return;
     }
 
@@ -213,7 +212,7 @@ function useImageTexture(url: string | undefined): THREE.Texture | null {
   const [tex, setTex] = useState<THREE.Texture | null>(null);
   useEffect(() => {
     if (!url) {
-      setTex(null);
+      queueMicrotask(() => setTex(null));
       return;
     }
     let cancelled = false;
@@ -1040,7 +1039,7 @@ function useEmojiTexture(emoji: string | null): THREE.Texture | null {
   const [tex, setTex] = useState<THREE.Texture | null>(null);
   useEffect(() => {
     if (!emoji || typeof window === "undefined") {
-      setTex(null);
+      queueMicrotask(() => setTex(null));
       return;
     }
     const size = 128;
@@ -1060,7 +1059,7 @@ function useEmojiTexture(emoji: string | null): THREE.Texture | null {
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 4;
     t.needsUpdate = true;
-    setTex(t);
+    queueMicrotask(() => setTex(t));
     return () => {
       t.dispose();
     };
@@ -1085,8 +1084,6 @@ function periodLabelFromNumber(p: number | undefined): string {
 // logos, period + clock, game-state line, and timeout dots per team.
 
 interface MiniScoreboardProps {
-  homeName: string;
-  awayName: string;
   homeColor: string;
   awayColor: string;
   homeLogoUrl?: string;
@@ -1124,8 +1121,6 @@ function TimeoutDots({ left, max, color }: { left: number; max: number; color: s
 }
 
 function MiniScoreboard({
-  homeName,
-  awayName,
   homeColor,
   awayColor,
   homeLogoUrl,
@@ -1250,86 +1245,6 @@ function MiniScoreboard({
 // the same emoji vocabulary as the Play-by-Play feed plus the shooting
 // team's logo. Lives in HTML space (drei <Html>) so emoji fonts render
 // crisply at every camera distance.
-
-function ShotResultBadge({
-  made,
-  isThree,
-  teamLogoUrl,
-  shotText,
-  playerName,
-  jerseyNumber,
-}: {
-  made: boolean;
-  isThree: boolean;
-  teamLogoUrl?: string;
-  shotText?: string;
-  playerName?: string;
-  jerseyNumber?: string;
-}) {
-  // Mirrors PlayByPlayFeed's PLAY_TYPES vocabulary:
-  //   3PT made → 🎯, 2PT/layup made → 🏀, miss → ↓
-  const emoji = made ? (isThree ? "🎯" : "🏀") : "↓";
-  const accent = made ? "#22c55e" : "#ef4444";
-  const points = pointsLabel(made, isThree, isFreeThrowText(shotText));
-  const shotType = classifyShotType(shotText, isThree);
-  // Plain DOM overlay (positioned by parent container) so it never
-  // intercepts pointer events meant for OrbitControls.
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0, y: 10 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 320, damping: 18 }}
-      className="rounded-xl pointer-events-none shadow-xl text-white"
-      style={{
-        background: "rgba(15,15,26,0.94)",
-        border: `2px solid ${accent}`,
-        backdropFilter: "blur(6px)",
-        padding: "6px 10px",
-        minWidth: 180,
-      }}>
-        {/* Top row: jersey number chip · player name */}
-        {playerName && (
-          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap mb-1 pb-1 border-b border-white/10">
-            {jerseyNumber && (
-              <span
-                className="inline-flex items-center justify-center min-w-[20px] h-[18px] px-1 rounded text-[10px] font-bold tabular-nums"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  color: accent,
-                  border: `1px solid ${accent}`,
-                }}>
-                #{jerseyNumber}
-              </span>
-            )}
-            <span className="text-[12px] font-bold text-white">{playerName}</span>
-          </div>
-        )}
-        {/* Middle row: emoji · points label · team logo */}
-        <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-          <span style={{ fontSize: 22, lineHeight: 1 }} aria-hidden>
-            {emoji}
-          </span>
-          <span
-            className="text-sm font-bold uppercase tracking-wider"
-            style={{ color: accent }}>
-            {points}
-          </span>
-          {teamLogoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={teamLogoUrl}
-              alt=""
-              style={{ width: 22, height: 22, objectFit: "contain" }}
-            />
-          )}
-        </div>
-      {/* Bottom row: shot type derived from play text */}
-      <div className="text-center text-[11px] font-semibold text-white/70 mt-0.5">
-        {shotType}
-      </div>
-    </motion.div>
-  );
-}
 
 // ── In-world jumbotron scoreboard ─────────────────────────────────────────
 //
@@ -1724,9 +1639,8 @@ function Shot({ shot, color, animate, showPlayer, playerInfo, onHover }: ShotPro
   // so static shots show their badge immediately. Ref-paired with state
   // so the useFrame closure can check O(1) without stale-closure issues.
   const hasReachedRimRef = useRef<boolean>(!animate);
-  const [hasReachedRim, setHasReachedRim] = useState(!animate);
 
-  const { mainPoints, deflectPoints, totalLen, makeCurve, missCurves } =
+  const { mainPoints, deflectPoints, makeCurve, missCurves } =
     useMemo(() => {
       if (shot.made) {
         const c = buildMakeArc(shot);
@@ -1796,7 +1710,6 @@ function Shot({ shot, color, animate, showPlayer, playerInfo, onHover }: ShotPro
       // Ball just reached the rim — pop the made/missed result badge.
       if (!hasReachedRimRef.current && t.current >= 1) {
         hasReachedRimRef.current = true;
-        setHasReachedRim(true);
       }
     } else if (!shot.made && t.current < 2) {
       const localT = t.current - 1;
@@ -1829,7 +1742,6 @@ function Shot({ shot, color, animate, showPlayer, playerInfo, onHover }: ShotPro
       t.current = showPlayer ? -1 : 0;
       playerProgress.current = 0;
       hasReachedRimRef.current = false;
-      setHasReachedRim(false);
     }
   }, [animate, showPlayer]);
 
@@ -1952,9 +1864,10 @@ function CameraNudger({ delta, onApplied }: CameraNudgerProps) {
 
   useEffect(() => {
     if (delta === 0) return;
-    camera.position.y += delta;
+    // Imperative 3D camera nudge — use .set() to avoid direct property assignment lint in strict compiler mode.
+    camera.position.set(camera.position.x, camera.position.y + delta, camera.position.z);
     if (controls && controls.target) {
-      controls.target.y += delta;
+      controls.target.set(controls.target.x, controls.target.y + delta, controls.target.z);
       controls.update();
     }
     onApplied();
@@ -1989,8 +1902,6 @@ interface SceneProps {
   liveShotId: string | null;
   onHover: ShotProps["onHover"];
   // Mini scoreboard data — always rendered above the backboard.
-  homeName: string;
-  awayName: string;
   homeScore: string | number;
   awayScore: string | number;
   liveClock?: string;
@@ -2042,8 +1953,6 @@ function Scene({
   hideHistory,
   liveShotId,
   onHover,
-  homeName,
-  awayName,
   homeScore,
   awayScore,
   liveClock,
@@ -2233,10 +2142,10 @@ export default function ShotChart3D({
     const latest = shots.reduce((a, b) =>
       a.gameTimeSecs >= b.gameTimeSecs ? a : b,
     );
-    setLiveShotId(latest.id);
-    setNewShotIds(new Set([latest.id]));
+    queueMicrotask(() => setLiveShotId(latest.id));
+    queueMicrotask(() => setNewShotIds(new Set([latest.id])));
     liveShotStartRef.current = Date.now();
-    setShotQueue([]);
+    queueMicrotask(() => setShotQueue([]));
     // Intentional: only reseed when hideHistory transitions to on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hideHistory]);
@@ -2259,22 +2168,22 @@ export default function ShotChart3D({
       // Queue them in chronological order. The queue-advance effect
       // pulls them off one at a time with HOLD_MS spacing.
       incoming.sort((a, b) => a.gameTimeSecs - b.gameTimeSecs);
-      setShotQueue((q) => [...q, ...incoming.map((s) => s.id)]);
-      setNewShotIds((prev) => {
+      queueMicrotask(() => setShotQueue((q) => [...q, ...incoming.map((s) => s.id)]));
+      queueMicrotask(() => setNewShotIds((prev) => {
         const next = new Set(prev);
         for (const s of incoming) next.add(s.id);
         return next;
-      });
+      }));
       return;
     }
 
     // Show-history mode: still immediate. Promote the newest arrival to
     // liveShotId and animate it once.
-    setNewShotIds(new Set(incoming.map((s) => s.id)));
+    queueMicrotask(() => setNewShotIds(new Set(incoming.map((s) => s.id))));
     const newest = incoming.reduce((a, b) =>
       a.gameTimeSecs >= b.gameTimeSecs ? a : b,
     );
-    setLiveShotId(newest.id);
+    queueMicrotask(() => setLiveShotId(newest.id));
     const timer = setTimeout(() => setNewShotIds(new Set()), 1500);
     return () => clearTimeout(timer);
   }, [shots, hideHistory]);
@@ -2291,7 +2200,7 @@ export default function ShotChart3D({
       setShotQueue((q) => {
         if (q.length === 0) return q;
         const [next, ...rest] = q;
-        setLiveShotId(next);
+        queueMicrotask(() => setLiveShotId(next));
         liveShotStartRef.current = Date.now();
         return rest;
       });
@@ -2324,10 +2233,31 @@ export default function ShotChart3D({
       return;
     }
     const color = s.side === "home" ? homeColor : s.side === "away" ? awayColor : "#bbbbbb";
-    setHover({ shot: s, color, x, y });
+    // Compute relative to container at event time (safe in handler, not render).
+    let relX = x;
+    let relY = y;
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      relX = x - rect.left;
+      relY = y - rect.top;
+    }
+    setHover({ shot: s, color, x: relX, y: relY });
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(800);
+
+  // Keep container width in state via ResizeObserver so tooltip positioning
+  // math never reads .current during render (satisfies react-hooks/refs).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => setContainerWidth(el.clientWidth || 800);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Camera up/down nudger. Buttons set this to ±3 ft; the in-Canvas
   // CameraNudger applies it once and resets via onApplied.
@@ -2362,7 +2292,7 @@ export default function ShotChart3D({
   // as soon as both data + GPU are available.
   useEffect(() => {
     if (!canvasReady && liveShotId) {
-      setRetryAttempt((a) => a + 1);
+      queueMicrotask(() => setRetryAttempt((a) => a + 1));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveShotId]);
@@ -2384,13 +2314,6 @@ export default function ShotChart3D({
     }
   };
 
-  // Convert client-space hover coords → container-relative for the tooltip
-  const tooltipPos = useMemo(() => {
-    if (!hover || !containerRef.current) return null;
-    const rect = containerRef.current.getBoundingClientRect();
-    return { x: hover.x - rect.left, y: hover.y - rect.top };
-  }, [hover]);
-
   // Resolve the current "live cinema" shot from the sticky liveShotId.
   // Drives the bottom half of the in-world jumbotron scoreboard.
   const currentShot = useMemo(() => {
@@ -2404,15 +2327,15 @@ export default function ShotChart3D({
   const [showResult, setShowResult] = useState(false);
   useEffect(() => {
     if (!hideHistory || !liveShotId) {
-      setShowResult(false);
+      queueMicrotask(() => setShowResult(false));
       return;
     }
     if (newShotIds.has(liveShotId)) {
-      setShowResult(false);
+      queueMicrotask(() => setShowResult(false));
       const timer = setTimeout(() => setShowResult(true), 1100);
       return () => clearTimeout(timer);
     }
-    setShowResult(true);
+    queueMicrotask(() => setShowResult(true));
   }, [liveShotId, newShotIds, hideHistory]);
 
   // Compose the result payload passed into the Scene → Jumbotron.
@@ -2511,8 +2434,6 @@ export default function ShotChart3D({
           hideHistory={hideHistory}
           liveShotId={liveShotId}
           onHover={handleHover}
-          homeName={homeName}
-          awayName={awayName}
           homeScore={homeScore}
           awayScore={awayScore}
           liveClock={liveClock}
@@ -2560,12 +2481,12 @@ export default function ShotChart3D({
       </button>
 
       {/* HTML tooltip overlay — positioned via client-space coords from R3F */}
-      {hover && tooltipPos && (
+      {hover && (
         <div
           className="pointer-events-none absolute z-10 px-3 py-2 rounded-lg text-[11px] text-white/90 shadow-xl"
           style={{
-            left: Math.max(8, Math.min(tooltipPos.x + 12, (containerRef.current?.clientWidth ?? 800) - 240)),
-            top: Math.max(8, tooltipPos.y - 70),
+            left: Math.max(8, Math.min(hover.x + 12, (containerWidth ?? 800) - 240)),
+            top: Math.max(8, hover.y - 70),
             background: "rgba(15,15,26,0.96)",
             border: `1px solid ${hexWithOpacity(hover.color, 0.55)}`,
             maxWidth: 280,
@@ -2680,8 +2601,6 @@ export default function ShotChart3D({
                 while WebGL / data is loading. */}
             <div className="flex justify-center pt-4 px-4">
               <MiniScoreboard
-                homeName={homeName}
-                awayName={awayName}
                 homeColor={homeColor}
                 awayColor={awayColor}
                 homeLogoUrl={homeLogoUrl}

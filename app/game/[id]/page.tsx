@@ -16,7 +16,7 @@ import { useGameData } from "@/hooks/useGameData";
 import { useAppStore } from "@/store/useAppStore";
 import { useQuery } from "@tanstack/react-query";
 import type { ESPNPlayerStats, ESPNTeam } from "@/lib/espn";
-import { getHeadshotUrl, getAthleteHeadshotById, getTeamLogoUrl, fetchTeam } from "@/lib/espn";
+import { getHeadshotUrl, getAthleteHeadshotById, fetchTeam } from "@/lib/espn";
 
 type Tab = "plays" | "boxscore" | "shotchart";
 
@@ -162,16 +162,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   }, [homeRosterQ.data, awayRosterQ.data]);
 
   // Build athlete ID → "home"|"away" map from boxscore (play refs often lack team data)
-  const teamMap = useMemo(() => {
-    const map: Record<string, "home" | "away"> = {};
-    boxscore?.players?.forEach((teamStats) => {
-      const side: "home" | "away" = teamStats.team.id === home?.team.id ? "home" : "away";
-      teamStats.statistics?.[0]?.athletes?.forEach((ps) => {
-        if (ps.athlete.id) map[ps.athlete.id] = side;
-      });
+  const homeTeamId = home?.team?.id;
+  // Built every render (tiny loop); avoids react-compiler memo-preservation error on object deps.
+  const teamMap: Record<string, "home" | "away"> = {};
+  boxscore?.players?.forEach((teamStats) => {
+    const side: "home" | "away" = teamStats.team.id === homeTeamId ? "home" : "away";
+    teamStats.statistics?.[0]?.athletes?.forEach((ps) => {
+      if (ps.athlete.id) teamMap[ps.athlete.id] = side;
     });
-    return map;
-  }, [boxscore, home]);
+  });
 
   // Count charged timeouts per team from play-by-play
   // Excludes TV/Official/mandatory timeouts which don't count against teams

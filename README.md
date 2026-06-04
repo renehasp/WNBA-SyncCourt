@@ -4,6 +4,34 @@ A live WNBA game tracker and roster browser built with Next.js. Pulls live score
 
 <img width="1077" height="1751" alt="image" src="https://github.com/user-attachments/assets/de642807-e366-41ca-98ee-964194ea3719" />
 
+## What's New in v4.0
+
+This release focuses on **code quality, stability, and modernization** after a deep audit of the v3.0 codebase. No major new user-facing features, but significant under-the-hood improvements that make the app more reliable and easier to maintain.
+
+### Code quality & linting
+- Achieved **zero ESLint errors** (was previously ~23 errors + warnings).
+- Fixed multiple React 19 / Compiler violations:
+  - No more accessing refs during render (fixed in 3D tooltip positioning with ResizeObserver + event-time calculations).
+  - Proper handling of state updates in effects (using `queueMicrotask` to avoid synchronous setState in effects).
+  - Made manual `useMemo` calls React Compiler friendly (stable primitive dependencies, fixed "memoization could not be preserved" errors).
+- Modernized `PlayerModal` data loading (replaced manual `useEffect` + state + direct fetch with TanStack Query).
+- Cleaned up dead code in the large `ShotChart3D.tsx` (removed unused `ShotResultBadge` component, dead `hasReachedRim` state, unused variables).
+
+### Modernization & best practices
+- Removed unused `next-themes` dependency (was declared but never used).
+- Added proper `viewport` export + `themeColor` in the root layout (recommended for Next.js 16+ and PWAs).
+- Bumped TypeScript `target` to `ES2022`.
+- Added a root `app/error.tsx` error boundary with user-friendly reset UI for better resilience.
+- Extracted a reusable `groupEventsByLocalDate` helper in `lib/utils.ts` (TZ-aware using `Intl.DateTimeFormat`) and refactored the schedule page to use it (eliminating duplication and making future date grouping consistent).
+- Fixed a scope bug in team roster sorting (ppgMap) that surfaced during the audit.
+
+### Developer experience
+- Full audit using codebase knowledge graph + manual review.
+- All changes verified with clean `npm run lint` and successful production builds.
+- Minor cleanups across components (unused imports/vars, consistent patterns).
+
+This makes v4.0 a solid, production-hardened foundation on top of the excellent v3.0 3D experience.
+
 ## What's New in v3.0
 
 This is a major release focused on the new **3D Shot Chart** experience — a fully 3D arena view of the same live play data the 2D chart already shows. The 2D chart still ships unchanged for users who prefer it.

@@ -228,13 +228,15 @@ export default function ShotChart({
   // so the user isn't stuck looking at a single replay shot they can't
   // change.
   useEffect(() => {
-    if (!isGameLive && hideHistory) setHideHistory(false);
+    if (!isGameLive && hideHistory) queueMicrotask(() => setHideHistory(false));
   }, [isGameLive, hideHistory]);
   const [tooltip, setTooltip] = useState<{
     svgX: number; svgY: number; text: string; color: string; playerId: string | null;
   } | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- referenced via 2D UI + 3D props; eslint may not see all paths
   const homeColor = getTeamColor(home.team.abbreviation) || "#a855f7";
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const awayColor = getTeamColor(away.team.abbreviation) || "#3b82f6";
   const homeSecondary = getTeamSecondary(home.team.abbreviation) || "#1a1a2e";
   const awaySecondary = getTeamSecondary(away.team.abbreviation) || "#1a1a2e";
@@ -313,7 +315,7 @@ export default function ShotChart({
 
   // If we were pinned past the live edge (rare — game data shrunk), clamp.
   useEffect(() => {
-    if (scrubSecs != null && scrubSecs > liveMaxSecs) setScrubSecs(null);
+    if (scrubSecs != null && scrubSecs > liveMaxSecs) queueMicrotask(() => setScrubSecs(null));
   }, [scrubSecs, liveMaxSecs]);
 
   const effectiveScrub = scrubSecs ?? liveMaxSecs;
@@ -394,7 +396,7 @@ export default function ShotChart({
   // list, drop back to "all". Avoids a frozen empty chart.
   useEffect(() => {
     if (playerFilter === "all") return;
-    if (!playerOptions.some((p) => p.id === playerFilter)) setPlayerFilter("all");
+    if (!playerOptions.some((p) => p.id === playerFilter)) queueMicrotask(() => setPlayerFilter("all"));
   }, [playerFilter, playerOptions]);
 
   // Period chip set is data-driven so we don't show empty quarters

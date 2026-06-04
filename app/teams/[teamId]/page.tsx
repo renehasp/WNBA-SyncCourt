@@ -26,17 +26,18 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
   });
 
   const team = data?.team;
-  const rawAthletes = data?.athletes ?? [];
   const abbr = team?.abbreviation ?? "";
   const color = getTeamColor(abbr) || `#${team?.color || "a855f7"}`;
   const secondary = getTeamSecondary(abbr);
   const record = team?.record?.items?.[0]?.summary;
   const logoUrl = getTeamLogoUrl(team);
 
+  const ppgMap = useMemo(() => leadersQuery.data?.ppg ?? {}, [leadersQuery.data?.ppg]);
+
   // Sort roster: leaders by season PPG first (MVP → down), then everyone else
   // by jersey number / name. Players with no recorded PPG fall to the bottom.
-  const ppgMap = leadersQuery.data?.ppg ?? {};
   const athletes = useMemo(() => {
+    const rawAthletes = data?.athletes ?? [];
     const ranked = [...rawAthletes].sort((a, b) => {
       const aP = ppgMap[a.id];
       const bP = ppgMap[b.id];
@@ -51,7 +52,7 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
       return a.displayName.localeCompare(b.displayName);
     });
     return ranked;
-  }, [rawAthletes, ppgMap]);
+  }, [data?.athletes, ppgMap]);
 
   // JS-driven column splitting. CSS multi-column was glitching when react-query
   // re-sorted the roster after initial paint (cards landed in the wrong columns
@@ -260,7 +261,7 @@ export default function TeamPage({ params }: { params: Promise<{ teamId: string 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {rosterColumns.map((col, c) => (
                 <div key={c} className="flex flex-col gap-3">
-                  {col.map((a, r) => {
+                  {col.map((a) => {
                 const idx = athletes.indexOf(a);
                 const headshot =
                   getHeadshotUrl(a.headshot) ?? (a.id ? getAthleteHeadshotById(a.id) : null);

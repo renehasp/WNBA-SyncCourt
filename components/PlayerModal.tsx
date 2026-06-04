@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, TrendingUp, AlertTriangle } from "lucide-react";
@@ -108,18 +108,15 @@ function FoulIndicator({ fouls, color }: { fouls: number; color: string }) {
 }
 
 export default function PlayerModal({ stats, team, labels = [], onClose }: PlayerModalProps) {
-  const [athleteOverview, setAthleteOverview] = useState<ESPNAthleteOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+  const athleteId = stats?.athlete?.id ?? null;
 
-  useEffect(() => {
-    if (stats?.athlete?.id) {
-      setLoading(true);
-      fetchAthleteOverview(stats.athlete.id)
-        .then(setAthleteOverview)
-        .catch(() => setAthleteOverview(null))
-        .finally(() => setLoading(false));
-    }
-  }, [stats?.athlete?.id]);
+  const { data: athleteOverview } = useQuery({
+    queryKey: ["athlete-overview", athleteId],
+    queryFn: () => (athleteId ? fetchAthleteOverview(athleteId) : Promise.resolve(null as ESPNAthleteOverview | null)),
+    enabled: !!athleteId,
+    staleTime: 1000 * 60 * 10, // 10 min
+    retry: 1,
+  });
 
   if (!stats || !team) return null;
 
